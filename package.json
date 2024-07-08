@@ -15,8 +15,7 @@
     "build:compile": "npx babel src --extensions .ts --out-dir build --source-maps",
     "build:types": "tsc",
     "generate": "npx prisma generate",
-    "push": "npx prisma db push",
-    "prepare": "husky"
+    "push": "npx prisma db push"
   },
   "keywords": [
     "lms",
