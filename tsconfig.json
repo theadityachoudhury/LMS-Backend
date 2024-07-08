@@ -1,13 +1,17 @@
 {
     "compilerOptions": {
-        "declaration": true,
-        "incremental": true,
-        "target": "es2016",
-        "module": "commonjs",
-        "outDir": "./dist",
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
+        "target": "ESNext",
+        "module": "CommonJS",
         "strict": true,
-        "skipLibCheck": true
-    }
+        "esModuleInterop": true,
+        "skipLibCheck": true,
+        "forceConsistentCasingInFileNames": true,
+        "outDir": "./dist", // or any other output directory you prefer
+        "baseUrl": "./",
+        "paths": {
+            "*": ["./node_modules/*"]
+        }
+    },
+    "include": ["**/*.ts"],
+    "exclude": ["node_modules"]
 }
