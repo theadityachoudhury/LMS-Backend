@@ -3,6 +3,17 @@
 
 echo "Running pre-commit hook...🍺"
 
+npm run lint || (
+  echo "ESLint check failed. ❌ "
+  exit 1
+)
+echo "ESLint check completed successfully. ✅ "
+
+npm run prettier || (
+  echo "Prettier check failed. ❌ "
+  exit 1
+)
+
 echo "ESLint & Prettier check completed successfully. ✅ "
 
 npm run build || (
