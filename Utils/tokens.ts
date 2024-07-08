@@ -1,5 +1,5 @@
 import jwt from 'jsonwebtoken';
-import { resUser } from '../Types';
+import { resUser } from '../Typings';
 import Config from '../Config';
 import { randomUUID } from 'crypto';
 import crypto from 'crypto';

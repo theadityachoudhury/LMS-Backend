@@ -13,7 +13,7 @@ import {
 import { CustomError } from '../../Utils/errorHandler';
 import jsonwebtoken from 'jsonwebtoken';
 import config from '../../Config';
-import { customRequest, resUser } from '../../Types';
+import { customRequest, resUser } from '../../Typings';
 import { dbQuery } from '../../Utils/connnectToDB';
 
 export const signupValidator = async (req: Request, res: Response, next: NextFunction) => {

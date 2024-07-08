@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { dbQuery } from '../../Utils/connnectToDB';
-import { User, customRequest, resUser } from '../../Types';
+import { User, customRequest, resUser } from '../../Typings';
 import { responseHandler } from '../../Utils/responseHandler';
 import {
     DB_ERROR,

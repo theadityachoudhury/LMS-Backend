@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { customRequest } from '../Types';
+import { customRequest } from '../Typings';
 import UAParser from 'ua-parser-js';
 
 export const detectDevice = (req: customRequest, res: Response, next: NextFunction) => {
