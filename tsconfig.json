@@ -1,17 +1,30 @@
 {
     "compilerOptions": {
-        "target": "ESNext",
-        "module": "CommonJS",
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "outDir": "./dist", // or any other output directory you prefer
-        "baseUrl": "./",
-        "paths": {
-            "*": ["./node_modules/*"]
-        }
+      "target": "ESNext",
+      "module": "commonjs",
+      "strict": true,
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "outDir": "./dist", // or any other output directory you prefer
+      "baseUrl": "./",
+      "paths": {
+        "*": ["./node_modules/*"]
+      },
+      "types": [
+        "node",
+        "express",
+        "bcrypt",
+        "cookie-parser",
+        "jsonwebtoken",
+        "cors"
+      ]
     },
-    "include": ["**/*.ts"],
-    "exclude": ["node_modules"]
-}
+    "include": [
+      "**/*.ts"
+    ],
+    "exclude": [
+      "node_modules"
+    ]
+  }
+  
