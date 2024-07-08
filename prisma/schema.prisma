@@ -1,0 +1,56 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum userRole {
+  ADMIN
+  USER
+}
+
+type name {
+  first String
+  last  String
+}
+
+type token {
+  tokenid      String   @default(uuid()) @map("tokenid")
+  lastUsed     DateTime @default(now())
+  instanceName String
+  accessToken  String
+  refreshToken String
+  expiresIn    DateTime
+}
+
+model User {
+  id           String         @id @default(uuid()) @map("_id")
+  email        String         @unique
+  username     String         @unique
+  password     String
+  name         name
+  role         userRole       @default(USER)
+  verified     Boolean        @default(false)
+  deleted      Boolean        @default(false)
+  disabled     Boolean        @default(false)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  refreshToken refreshToken[]
+}
+
+model refreshToken {
+  id        String   @id @default(uuid()) @map("_id")
+  userId    String
+  token     token[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@unique([userId, id])
+  @@index([userId])
+  @@map("RefreshToken")
+}
