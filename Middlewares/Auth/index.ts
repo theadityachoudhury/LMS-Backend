@@ -1,7 +1,15 @@
 import { NextFunction, Request, Response } from 'express';
 import { loginSchema, registerSchema } from '../../Validators/Auth';
 import Joi from 'joi';
-import { INVALID_TOKEN, NO_TOKEN, SERVER_ERROR, USER_NOT_FOUND, VALIDATION_ERROR } from '../../Utils/responseMessages';
+import {
+  INVALID_TOKEN,
+  NO_TOKEN,
+  SERVER_ERROR,
+  USER_IS_DELETED,
+  USER_IS_DISABLED,
+  USER_NOT_FOUND,
+  VALIDATION_ERROR,
+} from '../../Utils/responseMessages';
 import { CustomError } from '../../Utils/errorHandler';
 import jsonwebtoken from 'jsonwebtoken';
 import config from '../../Config';
@@ -161,4 +169,37 @@ export const refreshTokenValidator = async (req: customRequest, res: Response, n
       next();
     }
   });
+};
+
+export const isUser = async (req: customRequest, res: Response, next: NextFunction) => {
+  const user = await dbQuery.user.findUnique({
+    where: {
+      id: req.user.id,
+    },
+  });
+  if (!user) {
+    return res.status(200).json({
+      status: 410,
+      reason: USER_NOT_FOUND,
+      success: false,
+      data: null,
+    });
+  }
+
+  if (req.user.disabled) {
+    return res.status(200).json({
+      status: 410,
+      reason: USER_IS_DISABLED,
+      success: false,
+      data: null,
+    });
+  } else if (req.user.deleted) {
+    return res.status(200).json({
+      status: 410,
+      reason: USER_IS_DELETED,
+      success: false,
+      data: null,
+    });
+  }
+  next();
 };

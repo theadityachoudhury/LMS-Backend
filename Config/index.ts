@@ -13,6 +13,7 @@ const requiredEnvVars = [
   'SMTP_PASS',
   'SMTP_SENDER_NAME',
   'NODE_ENV',
+  'HASH_SECRET',
 ];
 
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
@@ -37,6 +38,7 @@ const config = {
   SMTP_PORT: parseInt(process.env.SMTP_PORT || '587', 10), // Default to 587 if not provided
   SMTP_SENDER_NAME: process.env.SMTP_SENDER_NAME as string,
   NODE_ENV: process.env.NODE_ENV as string,
+  HASH_SECRET: process.env.HASH_SECRET as string,
 };
 
 export default config;

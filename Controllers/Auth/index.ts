@@ -10,6 +10,9 @@ import {
   MAX_SESSIONS,
   NO_TOKEN,
   NO_TOKEN_FOUND,
+  NO_TOKEN_PASSWORD_RESET,
+  PASSWORD_RESET_LINK_SENT,
+  PASSWORD_RESET_SUCCESS,
   SERVER_ERROR,
   TOKEN_EXPIRED,
   TOKEN_REFRESH,
@@ -24,7 +27,7 @@ import {
 import { CustomError } from '../../Utils/errorHandler';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { comparePassword, hashPassword } from '../../Utils/hash';
-import { loginAlertMail, sendWelcomeMail } from '../../Utils/mailer';
+import { loginAlertMail, sendPasswordResetMail, sendWelcomeMail } from '../../Utils/mailer';
 import { generateAccessToken, generateRefreshToken, generateResetPasswordToken } from '../../Utils/tokens';
 import { randomUUID } from 'crypto';
 
@@ -601,7 +604,8 @@ export const getUser = async (req: customRequest, res: Response, next: NextFunct
   }
 };
 
-export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+export const resetPasswordLink = async (req: Request, res: Response, next: NextFunction) => {
+  const type = 'PASS_RESET';
   try {
     const { email, username } = req.body.recognition;
     const user = await dbQuery.user.findFirst({
@@ -623,16 +627,354 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
       );
     }
 
+    if (user.deleted) {
+      return responseHandler(
+        {
+          status: 402,
+          success: false,
+          message: USER_IS_DELETED,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
+    if (user.disabled) {
+      return responseHandler(
+        {
+          status: 405,
+          success: false,
+          message: USER_IS_DISABLED,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
     // Send the password reset link to the user's email
     const resetToken = generateResetPasswordToken(user);
-    console.log(resetToken);
+    //save the token in the database
+    const auth = await dbQuery.auth.findFirst({
+      where: {
+        userId: user.id,
+        type,
+      },
+    });
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    return responseHandler(
+    if (auth) {
+      await dbQuery.auth.update({
+        where: { id: auth.id },
+        data: {
+          token: resetToken,
+          expiresAt: expiresAt,
+        },
+      });
+    } else {
+      await dbQuery.auth.create({
+        data: {
+          userId: user.id,
+          type,
+          token: resetToken,
+          expiresAt: expiresAt,
+        },
+      });
+    }
+    responseHandler(
       {
         status: 200,
         success: true,
-        message: 'Password reset link sent',
-        data: resetToken,
+        message: PASSWORD_RESET_LINK_SENT,
+        data: null,
+      },
+      req,
+      res,
+    );
+
+    sendPasswordResetMail(user.email, user.name.first, `https://lms.adityachoudhury.com/reset/${resetToken}`, expiresAt.toLocaleString()).catch(
+      (error) => console.error(error),
+    );
+  } catch (error) {
+    console.error(error);
+    let err: CustomError;
+    if (error instanceof PrismaClientKnownRequestError) {
+      err = {
+        name: 'CustomError',
+        message: error.message,
+        statusCode: 400,
+        reason: DB_ERROR,
+      };
+    } else {
+      err = {
+        name: 'CustomError',
+        message: 'An internal server error occurred',
+        statusCode: 500,
+        reason: SERVER_ERROR,
+      };
+    }
+    next(err);
+  }
+};
+
+/**
+ * Reset Password Function
+ * @param {string} token
+ * @param {string} password
+ * @returns {string} - 404 Token not found
+ * @returns {string} - 403Token expired
+ * @returns {string} - 200 Password reset successful
+ * @returns {string} - 400 Database Error
+ * @returns {string} - 500 Internal Server Error
+ * @returns {string} - 401 User not found
+ * @returns {string} - 402 User is deleted
+ * @returns {string} - 405 User is disabled
+ *
+ */
+
+export const isActiveResetLink = async (req: Request, res: Response, next: NextFunction) => {
+  const type = 'PASS_RESET';
+  try {
+    const { token } = req.params;
+    const auth = await dbQuery.auth.findFirst({
+      where: {
+        token,
+        type,
+      },
+    });
+
+    if (!auth) {
+      return responseHandler(
+        {
+          status: 404,
+          success: false,
+          message: NO_TOKEN_FOUND,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
+    const expiresAt = new Date(auth.expiresAt);
+    const now = new Date();
+    if (expiresAt < now) {
+      return responseHandler(
+        {
+          status: 403,
+          success: false,
+          message: TOKEN_EXPIRED,
+          data: {
+            isActive: false,
+          },
+        },
+        req,
+        res,
+      );
+    }
+
+    const user = await dbQuery.user.findUnique({
+      where: {
+        id: auth.userId,
+      },
+    });
+
+    if (!user) {
+      return responseHandler(
+        {
+          status: 401,
+          success: false,
+          message: USER_NOT_FOUND,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
+    if (user.deleted) {
+      return responseHandler(
+        {
+          status: 402,
+          success: false,
+          message: USER_IS_DELETED,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
+    if (user.disabled) {
+      return responseHandler(
+        {
+          status: 405,
+          success: false,
+          message: USER_IS_DISABLED,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
+    responseHandler(
+      {
+        status: 200,
+        success: true,
+        message: 'Token is active',
+        data: {
+          isActive: true,
+        },
+      },
+      req,
+      res,
+    );
+  } catch (error) {
+    console.error(error);
+    let err: CustomError;
+    if (error instanceof PrismaClientKnownRequestError) {
+      err = {
+        name: 'CustomError',
+        message: error.message,
+        statusCode: 400,
+        reason: DB_ERROR,
+      };
+    } else {
+      err = {
+        name: 'CustomError',
+        message: 'An internal server error occurred',
+        statusCode: 500,
+        reason: SERVER_ERROR,
+      };
+    }
+    next(err);
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
+  const type = 'PASS_RESET';
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!token || !password) {
+      return responseHandler(
+        {
+          status: 404,
+          success: false,
+          message: NO_TOKEN_PASSWORD_RESET,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
+    const auth = await dbQuery.auth.findFirst({
+      where: {
+        token,
+        type,
+      },
+    });
+
+    if (!auth) {
+      return responseHandler(
+        {
+          status: 404,
+          success: false,
+          message: INVALID_TOKEN,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
+    const expiresAt = new Date(auth.expiresAt);
+    const now = new Date();
+    if (expiresAt < now) {
+      return responseHandler(
+        {
+          status: 403,
+          success: false,
+          message: TOKEN_EXPIRED,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
+    const user = await dbQuery.user.findUnique({
+      where: {
+        id: auth.userId,
+      },
+    });
+
+    if (!user) {
+      return responseHandler(
+        {
+          status: 401,
+          success: false,
+          message: USER_NOT_FOUND,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
+    if (user.deleted) {
+      return responseHandler(
+        {
+          status: 402,
+          success: false,
+          message: USER_IS_DELETED,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
+    if (user.disabled) {
+      return responseHandler(
+        {
+          status: 405,
+          success: false,
+          message: USER_IS_DISABLED,
+          data: null,
+        },
+        req,
+        res,
+      );
+    }
+
+    // Update the user's password
+    await dbQuery.user.update({
+      where: {
+        id: user.id,
+      },
+      data: {
+        password: hashPassword(password),
+      },
+    });
+
+    // Delete the auth token
+    await dbQuery.auth.delete({
+      where: {
+        id: auth.id,
+      },
+    });
+
+    responseHandler(
+      {
+        status: 200,
+        success: true,
+        message: PASSWORD_RESET_SUCCESS,
+        data: null,
       },
       req,
       res,

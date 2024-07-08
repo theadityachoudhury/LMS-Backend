@@ -26,6 +26,11 @@ type token {
   expiresIn    DateTime
 }
 
+enum authType {
+  PASS_RESET
+  EMAIL_VERIFICATION
+}
+
 model User {
   id           String         @id @default(uuid()) @map("_id")
   email        String         @unique
@@ -39,6 +44,7 @@ model User {
   createdAt    DateTime       @default(now())
   updatedAt    DateTime       @updatedAt
   refreshToken refreshToken[]
+  auth         auth[]
 }
 
 model refreshToken {
@@ -53,4 +59,19 @@ model refreshToken {
   @@unique([userId, id])
   @@index([userId])
   @@map("RefreshToken")
+}
+
+model auth {
+  id        String   @id @default(uuid()) @map("_id")
+  userId    String
+  token     String
+  type      authType
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([id])
+  @@map("Auth")
 }

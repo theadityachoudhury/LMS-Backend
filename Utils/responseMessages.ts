@@ -35,3 +35,9 @@ export const NO_TOKEN_FOUND = 'No token found';
 export const TOKEN_EXPIRED = 'Token expired';
 
 export const TOKEN_REFRESH = 'Token refreshed';
+
+export const PASSWORD_RESET_SUCCESS = 'Password reset successful';
+
+export const NO_TOKEN_PASSWORD_RESET = 'No token provided for password reset';
+
+export const PASSWORD_RESET_LINK_SENT = 'Password reset link sent to your email';

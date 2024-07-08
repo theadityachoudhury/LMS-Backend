@@ -87,3 +87,12 @@ export const loginAlertMail = async (to: string, userName: string, deviceType: s
     throw error;
   }
 };
+
+export const sendPasswordResetMail = async (to: string, name: string, resetLink: string, linkExpiryTime: string) => {
+  try {
+    await sendMail(to, 'Password Reset', 'passwordReset', { name, resetLink, linkExpiryTime });
+  } catch (error) {
+    console.error(`Failed to send password reset email to ${to}: ${error}`);
+    throw error;
+  }
+};
