@@ -18,7 +18,6 @@ export function generateRefreshToken(user: resUser) {
   });
 }
 
-
 export function generateResetPasswordToken(user: resUser) {
   //generate a token that can be used in a link using the user information but it should not be able to decode the token and add an expiry time without using jwt.sign
   return randomUUID() + Buffer.from(JSON.stringify(user)).toString('base64') + Date.now() + randomUUID();

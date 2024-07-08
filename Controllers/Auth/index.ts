@@ -278,7 +278,7 @@ export const login = async (req: customRequest, res: Response, next: NextFunctio
       req,
       res,
     );
-    loginAlertMail(user.email, user.name.first, req.device.type, req.headers['user-agent'] || "Unknown").catch((error) => console.error(error));
+    loginAlertMail(user.email, user.name.first, req.device.type, req.headers['user-agent'] || 'Unknown').catch((error) => console.error(error));
   } catch (error) {
     console.error(error);
     let err: CustomError;

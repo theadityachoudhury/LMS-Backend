@@ -75,9 +75,15 @@ export const sendWelcomeMail = async (to: string, name: string) => {
 
 export const loginAlertMail = async (to: string, userName: string, deviceType: string, browser: string) => {
   try {
-    await sendMail(to, 'Login Alert', 'Login', { userName, deviceType, browser, loginTime: new Date().toLocaleString(), "resetPasswordLink": `${config.FRONTEND_URL}/reset` });
+    await sendMail(to, 'Login Alert', 'Login', {
+      userName,
+      deviceType,
+      browser,
+      loginTime: new Date().toLocaleString(),
+      resetPasswordLink: `${config.FRONTEND_URL}/reset`,
+    });
   } catch (error) {
     console.error(`Failed to send login alert email to ${to}: ${error}`);
     throw error;
   }
-}
+};

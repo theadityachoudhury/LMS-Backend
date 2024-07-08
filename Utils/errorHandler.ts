@@ -8,7 +8,7 @@ export interface CustomError extends Error {
 }
 
 export const errorHandler = (err: CustomError, req: Request, res: Response, next: NextFunction) => {
-  consola.error("Stack Trace:- ", err.stack); // Log the error stack trace for debugging
+  consola.error('Stack Trace:- ', err.stack); // Log the error stack trace for debugging
 
   // Determine the status code based on the error type
   const statusCode = err.statusCode || 500;
@@ -21,6 +21,6 @@ export const errorHandler = (err: CustomError, req: Request, res: Response, next
     success: false,
     reason: reason,
     message: message,
-    data: null
-  })
+    data: null,
+  });
 };
