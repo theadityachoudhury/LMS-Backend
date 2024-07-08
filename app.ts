@@ -63,7 +63,7 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/auth', Auth);
 
 // Not found middleware
-app.use((req, res, next) => {
+app.use((req: Request, res: Response, next: NextFunction) => {
     const err: CustomError = {
         name: 'CustomError',
         message: NOT_FOUND,
