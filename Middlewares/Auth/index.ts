@@ -12,7 +12,6 @@ export const signupValidator = async (req: Request, res: Response, next: NextFun
   try {
     await registerSchema.validateAsync(req.body);
     next();
-    res;
   } catch (error: unknown) {
     console.error(error);
     let err: CustomError;
@@ -39,7 +38,6 @@ export const loginValidator = async (req: Request, res: Response, next: NextFunc
   try {
     await loginSchema.validateAsync(req.body);
     next();
-    res;
   } catch (error: unknown) {
     console.error(error);
     let err: CustomError;

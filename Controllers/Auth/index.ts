@@ -24,8 +24,8 @@ import {
 import { CustomError } from '../../Utils/errorHandler';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { comparePassword, hashPassword } from '../../Utils/hash';
-import { sendWelcomeMail } from '../../Utils/mailer';
-import { generateAccessToken, generateRefreshToken } from '../../Utils/tokens';
+import { loginAlertMail, sendWelcomeMail } from '../../Utils/mailer';
+import { generateAccessToken, generateRefreshToken, generateResetPasswordToken } from '../../Utils/tokens';
 import { randomUUID } from 'crypto';
 
 /**
@@ -123,7 +123,7 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
  * @returns {string} - 500 Internal Server Error
  *
  */
-export const login = async (req: Request, res: Response, next: NextFunction) => {
+export const login = async (req: customRequest, res: Response, next: NextFunction) => {
   try {
     const { password, recognition } = req.body;
     const { username, email } = recognition;
@@ -278,6 +278,7 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       req,
       res,
     );
+    loginAlertMail(user.email, user.name.first, req.device.type, req.headers['user-agent'] || "Unknown").catch((error) => console.error(error));
   } catch (error) {
     console.error(error);
     let err: CustomError;
@@ -623,6 +624,19 @@ export const resetPassword = async (req: Request, res: Response, next: NextFunct
     }
 
     // Send the password reset link to the user's email
+    const resetToken = generateResetPasswordToken(user);
+    console.log(resetToken);
+
+    return responseHandler(
+      {
+        status: 200,
+        success: true,
+        message: 'Password reset link sent',
+        data: resetToken,
+      },
+      req,
+      res,
+    );
   } catch (error) {
     console.error(error);
     let err: CustomError;

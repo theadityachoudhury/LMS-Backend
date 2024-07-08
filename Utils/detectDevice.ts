@@ -13,5 +13,4 @@ export const detectDevice = (req: customRequest, res: Response, next: NextFuncti
   };
 
   next();
-  res;
 };

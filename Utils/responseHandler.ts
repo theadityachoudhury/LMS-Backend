@@ -9,5 +9,4 @@ interface ApiResponse {
 
 export const responseHandler = (data: ApiResponse, req: Request, res: Response) => {
   res.status(200).json(data);
-  req;
 };

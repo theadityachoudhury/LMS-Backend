@@ -1,6 +1,4 @@
-// Utils/errorHandler.ts
-
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction, response } from 'express';
 import consola from 'consola';
 import { SERVER_ERROR } from './responseMessages';
 
@@ -9,8 +7,8 @@ export interface CustomError extends Error {
   reason: string;
 }
 
-export const errorHandler = (err: CustomError, req: Request, res: Response) => {
-  consola.error('Stack Trace:- ', err.stack); // Log the error stack trace for debugging
+export const errorHandler = (err: CustomError, req: Request, res: Response, next: NextFunction) => {
+  consola.error("Stack Trace:- ", err.stack); // Log the error stack trace for debugging
 
   // Determine the status code based on the error type
   const statusCode = err.statusCode || 500;
@@ -23,7 +21,6 @@ export const errorHandler = (err: CustomError, req: Request, res: Response) => {
     success: false,
     reason: reason,
     message: message,
-    data: null,
-  });
-  req;
+    data: null
+  })
 };

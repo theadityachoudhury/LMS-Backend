@@ -63,19 +63,19 @@ app.get('/health', (req: Request, res: Response) => {
 app.use('/api/auth', Auth);
 
 // Not found middleware
-app.use(() => {
+app.use((req, res, next) => {
   const err: CustomError = {
     name: 'CustomError',
     message: NOT_FOUND,
     statusCode: 404,
     reason: 'Not Found',
   };
-  throw err;
+  next(err);
 });
 
 // Error handling middleware
-app.use((err: CustomError, req: Request, res: Response) => {
-  errorHandler(err, req, res);
+app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
+  errorHandler(err, req, res, next);
 });
 
 // Start server
