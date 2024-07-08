@@ -1,10 +1,10 @@
 interface OTPFlags {
-  numeric?: boolean;
-  alphaNumeric?: boolean;
-  alpha?: boolean;
-  upperCase?: boolean;
-  lowerCase?: boolean;
-  specialChars?: boolean;
+    numeric?: boolean;
+    alphaNumeric?: boolean;
+    alpha?: boolean;
+    upperCase?: boolean;
+    lowerCase?: boolean;
+    specialChars?: boolean;
 }
 
 /**
@@ -41,42 +41,42 @@ interface OTPFlags {
  * const otp5 = otpGenerator(14, { numeric: true, specialChars: true });
  */
 export const otpGenerator = (length: number = 6, flags: OTPFlags = { numeric: true }): string => {
-  const numericPool = '0123456789';
-  const alphaPool = 'abcdefghijklmnopqrstuvwxyz';
-  const upperCaseAlphaPool = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const specialCharsPool = '!@#$%^&*()_+{}:"<>?|[];,./`~';
+    const numericPool = '0123456789';
+    const alphaPool = 'abcdefghijklmnopqrstuvwxyz';
+    const upperCaseAlphaPool = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const specialCharsPool = '!@#$%^&*()_+{}:"<>?|[];,./`~';
 
-  let charPool = '';
+    let charPool = '';
 
-  if (flags.numeric) {
-    charPool += numericPool;
-  }
-  if (flags.alphaNumeric) {
-    charPool += numericPool + alphaPool + upperCaseAlphaPool;
-  }
-  if (flags.alpha) {
-    charPool += alphaPool;
-  }
-  if (flags.upperCase) {
-    charPool += upperCaseAlphaPool;
-  }
-  if (flags.lowerCase) {
-    charPool += alphaPool;
-  }
-  if (flags.specialChars) {
-    charPool += specialCharsPool;
-  }
+    if (flags.numeric) {
+        charPool += numericPool;
+    }
+    if (flags.alphaNumeric) {
+        charPool += numericPool + alphaPool + upperCaseAlphaPool;
+    }
+    if (flags.alpha) {
+        charPool += alphaPool;
+    }
+    if (flags.upperCase) {
+        charPool += upperCaseAlphaPool;
+    }
+    if (flags.lowerCase) {
+        charPool += alphaPool;
+    }
+    if (flags.specialChars) {
+        charPool += specialCharsPool;
+    }
 
-  // Default to numeric if no flags are set to avoid an empty pool
-  if (charPool.length === 0) {
-    charPool = numericPool;
-  }
+    // Default to numeric if no flags are set to avoid an empty pool
+    if (charPool.length === 0) {
+        charPool = numericPool;
+    }
 
-  let otp = '';
-  for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charPool.length);
-    otp += charPool[randomIndex];
-  }
+    let otp = '';
+    for (let i = 0; i < length; i++) {
+        const randomIndex = Math.floor(Math.random() * charPool.length);
+        otp += charPool[randomIndex];
+    }
 
-  return otp;
+    return otp;
 };

@@ -2,9 +2,9 @@
 import bcrypt from 'bcrypt';
 
 export function hashPassword(password: string): string {
-  return bcrypt.hashSync(password, 10);
+    return bcrypt.hashSync(password, 10);
 }
 
 export function comparePassword(password: string, hash: string): boolean {
-  return bcrypt.compareSync(password, hash);
+    return bcrypt.compareSync(password, hash);
 }
