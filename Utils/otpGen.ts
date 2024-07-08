@@ -1,10 +1,10 @@
 interface OTPFlags {
-  numeric?: boolean
-  alphaNumeric?: boolean
-  alpha?: boolean
-  upperCase?: boolean
-  lowerCase?: boolean
-  specialChars?: boolean
+  numeric?: boolean;
+  alphaNumeric?: boolean;
+  alpha?: boolean;
+  upperCase?: boolean;
+  lowerCase?: boolean;
+  specialChars?: boolean;
 }
 
 /**
@@ -40,46 +40,43 @@ interface OTPFlags {
  * // Generates a numeric and special character OTP of length 14
  * const otp5 = otpGenerator(14, { numeric: true, specialChars: true });
  */
-export const otpGenerator = (
-  length: number = 6,
-  flags: OTPFlags = { numeric: true },
-): string => {
-  const numericPool = '0123456789'
-  const alphaPool = 'abcdefghijklmnopqrstuvwxyz'
-  const upperCaseAlphaPool = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-  const specialCharsPool = '!@#$%^&*()_+{}:"<>?|[];,./`~'
+export const otpGenerator = (length: number = 6, flags: OTPFlags = { numeric: true }): string => {
+  const numericPool = '0123456789';
+  const alphaPool = 'abcdefghijklmnopqrstuvwxyz';
+  const upperCaseAlphaPool = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const specialCharsPool = '!@#$%^&*()_+{}:"<>?|[];,./`~';
 
-  let charPool = ''
+  let charPool = '';
 
   if (flags.numeric) {
-    charPool += numericPool
+    charPool += numericPool;
   }
   if (flags.alphaNumeric) {
-    charPool += numericPool + alphaPool + upperCaseAlphaPool
+    charPool += numericPool + alphaPool + upperCaseAlphaPool;
   }
   if (flags.alpha) {
-    charPool += alphaPool
+    charPool += alphaPool;
   }
   if (flags.upperCase) {
-    charPool += upperCaseAlphaPool
+    charPool += upperCaseAlphaPool;
   }
   if (flags.lowerCase) {
-    charPool += alphaPool
+    charPool += alphaPool;
   }
   if (flags.specialChars) {
-    charPool += specialCharsPool
+    charPool += specialCharsPool;
   }
 
   // Default to numeric if no flags are set to avoid an empty pool
   if (charPool.length === 0) {
-    charPool = numericPool
+    charPool = numericPool;
   }
 
-  let otp = ''
+  let otp = '';
   for (let i = 0; i < length; i++) {
-    const randomIndex = Math.floor(Math.random() * charPool.length)
-    otp += charPool[randomIndex]
+    const randomIndex = Math.floor(Math.random() * charPool.length);
+    otp += charPool[randomIndex];
   }
 
-  return otp
-}
+  return otp;
+};

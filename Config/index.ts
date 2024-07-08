@@ -1,5 +1,5 @@
-import dotenv from 'dotenv'
-dotenv.config()
+import dotenv from 'dotenv';
+dotenv.config();
 
 const requiredEnvVars = [
   'BACKEND_URL',
@@ -13,15 +13,13 @@ const requiredEnvVars = [
   'SMTP_PASS',
   'SMTP_SENDER_NAME',
   'NODE_ENV',
-]
+];
 
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar])
+const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
-  console.error(
-    `Cannot start the app. Missing environment variables: \n${missingEnvVars.join('\n')}`,
-  )
-  process.exit(1)
+  console.error(`Cannot start the app. Missing environment variables: \n${missingEnvVars.join('\n')}`);
+  process.exit(1);
 }
 
 const config = {
@@ -39,6 +37,6 @@ const config = {
   SMTP_PORT: parseInt(process.env.SMTP_PORT || '587', 10), // Default to 587 if not provided
   SMTP_SENDER_NAME: process.env.SMTP_SENDER_NAME as string,
   NODE_ENV: process.env.NODE_ENV as string,
-}
+};
 
-export default config
+export default config;

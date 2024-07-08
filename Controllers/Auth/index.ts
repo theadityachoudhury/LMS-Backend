@@ -1,7 +1,7 @@
-import { NextFunction, Request, Response } from 'express'
-import { dbQuery } from '../../Utils/connnectToDB'
-import { User, customRequest, resUser } from '../../Types'
-import { responseHandler } from '../../Utils/responseHandler'
+import { NextFunction, Request, Response } from 'express';
+import { dbQuery } from '../../Utils/connnectToDB';
+import { User, customRequest, resUser } from '../../Types';
+import { responseHandler } from '../../Utils/responseHandler';
 import {
   DB_ERROR,
   INCORRECR_PASSWORD,
@@ -20,13 +20,13 @@ import {
   USER_LOGGED_OUT,
   USER_NOT_FOUND,
   USER_REGISTERED,
-} from '../../Utils/responseMessages'
-import { CustomError } from '../../Utils/errorHandler'
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
-import { comparePassword, hashPassword } from '../../Utils/hash'
-import { sendWelcomeMail } from '../../Utils/mailer'
-import { generateAccessToken, generateRefreshToken } from '../../Utils/tokens'
-import { randomUUID } from 'crypto'
+} from '../../Utils/responseMessages';
+import { CustomError } from '../../Utils/errorHandler';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
+import { comparePassword, hashPassword } from '../../Utils/hash';
+import { sendWelcomeMail } from '../../Utils/mailer';
+import { generateAccessToken, generateRefreshToken } from '../../Utils/tokens';
+import { randomUUID } from 'crypto';
 
 /**
  * Register Function
@@ -37,23 +37,19 @@ import { randomUUID } from 'crypto'
  * @returns {string} - 500 Internal Server Error
  *
  */
-export const register = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const register = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, password, username, name } = req.body
+    const { email, password, username, name } = req.body;
 
     // Check if the user already exists
     let user: User | null = await dbQuery.user.findUnique({
       where: { email },
-    })
+    });
 
     if (!user) {
       user = await dbQuery.user.findUnique({
         where: { username },
-      })
+      });
     }
 
     if (user) {
@@ -66,7 +62,7 @@ export const register = async (
         },
         req,
         res,
-      )
+      );
     }
 
     // Create a new user
@@ -80,7 +76,7 @@ export const register = async (
           last: name.last || '',
         },
       },
-    })
+    });
 
     // Respond with the newly created user
     responseHandler(
@@ -92,29 +88,29 @@ export const register = async (
       },
       req,
       res,
-    )
-    sendWelcomeMail(email, name.first).catch(error => console.error(error))
+    );
+    sendWelcomeMail(email, name.first).catch((error) => console.error(error));
   } catch (error: unknown) {
-    console.error(error)
-    let err: CustomError
+    console.error(error);
+    let err: CustomError;
     if (error instanceof PrismaClientKnownRequestError) {
       err = {
         name: 'CustomError',
         message: error.message,
         statusCode: 400,
         reason: DB_ERROR,
-      }
+      };
     } else {
       err = {
         name: 'CustomError',
         message: 'An internal server error occurred',
         statusCode: 500,
         reason: SERVER_ERROR,
-      }
+      };
     }
-    return next(err)
+    return next(err);
   }
-}
+};
 
 /**
  * Login Function
@@ -127,23 +123,19 @@ export const register = async (
  * @returns {string} - 500 Internal Server Error
  *
  */
-export const login = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const login = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { password, recognition } = req.body
-    const { username, email } = recognition
-    let user: User | null
+    const { password, recognition } = req.body;
+    const { username, email } = recognition;
+    let user: User | null;
     if (email) {
       user = await dbQuery.user.findUnique({
         where: { email },
-      })
+      });
     } else {
       user = await dbQuery.user.findUnique({
         where: { username },
-      })
+      });
     }
     if (!user) {
       return responseHandler(
@@ -155,7 +147,7 @@ export const login = async (
         },
         req,
         res,
-      )
+      );
     }
 
     if (user.deleted) {
@@ -168,7 +160,7 @@ export const login = async (
         },
         req,
         res,
-      )
+      );
     }
 
     if (user.disabled) {
@@ -181,7 +173,7 @@ export const login = async (
         },
         req,
         res,
-      )
+      );
     }
 
     // Check if the password is correct
@@ -195,16 +187,16 @@ export const login = async (
         },
         req,
         res,
-      )
+      );
     }
 
     const refreshTokenColl = await dbQuery.refreshToken.findFirst({
       where: {
         userId: user.id,
       },
-    })
+    });
 
-    const tokens = refreshTokenColl?.token || []
+    const tokens = refreshTokenColl?.token || [];
 
     const resUser: resUser = {
       id: user.id,
@@ -217,14 +209,14 @@ export const login = async (
       verified: user.verified,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-    }
+    };
 
-    const accessToken: string = generateAccessToken(resUser)
-    const refreshToken: string = generateRefreshToken(resUser)
-    const ua: string = req.headers['user-agent'] || 'Unkown'
+    const accessToken: string = generateAccessToken(resUser);
+    const refreshToken: string = generateRefreshToken(resUser);
+    const ua: string = req.headers['user-agent'] || 'Unkown';
 
-    const now = new Date()
-    const validTokens = tokens.filter(token => token.expiresIn > now)
+    const now = new Date();
+    const validTokens = tokens.filter((token) => token.expiresIn > now);
 
     if (validTokens.length >= 4) {
       return responseHandler(
@@ -236,7 +228,7 @@ export const login = async (
         },
         req,
         res,
-      )
+      );
     }
 
     validTokens.push({
@@ -246,20 +238,20 @@ export const login = async (
       lastUsed: now,
       instanceName: ua,
       tokenid: randomUUID(),
-    })
+    });
 
     if (refreshTokenColl) {
       await dbQuery.refreshToken.update({
         where: { id: refreshTokenColl.id },
         data: { token: validTokens },
-      })
+      });
     } else {
       await dbQuery.refreshToken.create({
         data: {
           userId: user.id,
           token: validTokens,
         },
-      })
+      });
     }
 
     res.cookie('accessToken', accessToken, {
@@ -267,14 +259,14 @@ export const login = async (
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 4 * 60 * 60 * 1000, //how much time?
-    })
+    });
 
     res.cookie('refreshToken', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 7 * 24 * 60 * 60 * 1000,
-    })
+    });
     // Respond with the access token and refresh token
     responseHandler(
       {
@@ -285,28 +277,28 @@ export const login = async (
       },
       req,
       res,
-    )
+    );
   } catch (error) {
-    console.error(error)
-    let err: CustomError
+    console.error(error);
+    let err: CustomError;
     if (error instanceof PrismaClientKnownRequestError) {
       err = {
         name: 'CustomError',
         message: error.message,
         statusCode: 400,
         reason: DB_ERROR,
-      }
+      };
     } else {
       err = {
         name: 'CustomError',
         message: SERVER_ERROR,
         statusCode: 500,
         reason: SERVER_ERROR,
-      }
+      };
     }
-    return next(err)
+    return next(err);
   }
-}
+};
 
 /**
  * Logout Function
@@ -316,15 +308,11 @@ export const login = async (
  * @returns {string} - 400 Database Error
  *
  */
-export const logout = async (
-  req: customRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const logout = async (req: customRequest, res: Response, next: NextFunction) => {
   try {
-    res.clearCookie('accessToken')
-    res.clearCookie('refreshToken')
-    const refreshToken = req.cookies.refreshToken
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+    const refreshToken = req.cookies.refreshToken;
     if (!refreshToken) {
       return responseHandler(
         {
@@ -335,7 +323,7 @@ export const logout = async (
         },
         req,
         res,
-      )
+      );
     }
 
     // pull the refresh token from the database of user userid
@@ -343,7 +331,7 @@ export const logout = async (
       where: {
         userId: req.user.id,
       },
-    })
+    });
 
     if (!refreshTokenColl) {
       return responseHandler(
@@ -355,18 +343,16 @@ export const logout = async (
         },
         req,
         res,
-      )
+      );
     }
 
-    const tokens = refreshTokenColl.token
-    const validTokens = tokens.filter(
-      token => token.refreshToken !== refreshToken,
-    )
+    const tokens = refreshTokenColl.token;
+    const validTokens = tokens.filter((token) => token.refreshToken !== refreshToken);
 
     await dbQuery.refreshToken.update({
       where: { id: refreshTokenColl.id },
       data: { token: validTokens },
-    })
+    });
 
     responseHandler(
       {
@@ -377,28 +363,28 @@ export const logout = async (
       },
       req,
       res,
-    )
+    );
   } catch (error) {
-    console.error(error)
-    let err: CustomError
+    console.error(error);
+    let err: CustomError;
     if (error instanceof PrismaClientKnownRequestError) {
       err = {
         name: 'CustomError',
         message: error.message,
         statusCode: 400,
         reason: DB_ERROR,
-      }
+      };
     } else {
       err = {
         name: 'CustomError',
         message: 'An internal server error occurred',
         statusCode: 500,
         reason: SERVER_ERROR,
-      }
+      };
     }
-    return next(err)
+    return next(err);
   }
-}
+};
 
 /**
  * Refresh Token Function
@@ -412,14 +398,9 @@ export const logout = async (
  * @returns {string} - 500 Internal Server Error
  *
  */
-export const refreshToken = async (
-  req: customRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const refreshToken = async (req: customRequest, res: Response, next: NextFunction) => {
   try {
-    const refreshToken =
-      req.cookies.refreshToken || req.cookies.refreshAccessToken
+    const refreshToken = req.cookies.refreshToken || req.cookies.refreshAccessToken;
 
     if (!refreshToken) {
       return responseHandler(
@@ -431,7 +412,7 @@ export const refreshToken = async (
         },
         req,
         res,
-      )
+      );
     }
 
     // pull the refresh token from the database of user userid
@@ -439,7 +420,7 @@ export const refreshToken = async (
       where: {
         userId: req.user.id,
       },
-    })
+    });
     if (!refreshTokenColl) {
       return responseHandler(
         {
@@ -450,11 +431,11 @@ export const refreshToken = async (
         },
         req,
         res,
-      )
+      );
     }
 
-    const tokens = refreshTokenColl.token
-    const validToken = tokens.find(token => token.refreshToken === refreshToken)
+    const tokens = refreshTokenColl.token;
+    const validToken = tokens.find((token) => token.refreshToken === refreshToken);
     if (!validToken) {
       return responseHandler(
         {
@@ -465,19 +446,17 @@ export const refreshToken = async (
         },
         req,
         res,
-      )
+      );
     }
 
-    const now = new Date()
+    const now = new Date();
     if (validToken.expiresIn < now) {
       // Remove the expired token
-      const newTokens = tokens.filter(
-        token => token.refreshToken !== refreshToken,
-      )
+      const newTokens = tokens.filter((token) => token.refreshToken !== refreshToken);
       await dbQuery.refreshToken.update({
         where: { id: refreshTokenColl.id },
         data: { token: newTokens },
-      })
+      });
       return responseHandler(
         {
           status: 400,
@@ -487,10 +466,10 @@ export const refreshToken = async (
         },
         req,
         res,
-      )
+      );
     }
 
-    const accessToken: string = generateAccessToken(req.user)
+    const accessToken: string = generateAccessToken(req.user);
     // Respond with the access token and refresh token
     //update the access token in the database
     // const ua: string = req.headers["user-agent"] || "Unkown";
@@ -501,26 +480,26 @@ export const refreshToken = async (
       lastUsed: now,
       instanceName: validToken.instanceName,
       tokenid: randomUUID(),
-    }
+    };
 
-    const newTokens = tokens.map(token => {
+    const newTokens = tokens.map((token) => {
       if (token.refreshToken === refreshToken) {
-        return newToken
+        return newToken;
       }
-      return token
-    })
+      return token;
+    });
 
     await dbQuery.refreshToken.update({
       where: { id: refreshTokenColl.id },
       data: { token: newTokens },
-    })
+    });
 
     res.cookie('accessToken', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       maxAge: 4 * 60 * 60 * 1000,
-    })
+    });
 
     responseHandler(
       {
@@ -531,28 +510,28 @@ export const refreshToken = async (
       },
       req,
       res,
-    )
+    );
   } catch (error) {
-    console.error(error)
-    let err: CustomError
+    console.error(error);
+    let err: CustomError;
     if (error instanceof PrismaClientKnownRequestError) {
       err = {
         name: 'CustomError',
         message: error.message,
         statusCode: 400,
         reason: DB_ERROR,
-      }
+      };
     } else {
       err = {
         name: 'CustomError',
         message: 'An internal server error occurred',
         statusCode: 500,
         reason: SERVER_ERROR,
-      }
+      };
     }
-    next(err)
+    next(err);
   }
-}
+};
 
 /**
  * User Function
@@ -563,11 +542,7 @@ export const refreshToken = async (
  * @returns {string} - 500 Internal Server Error
  *
  */
-export const getUser = async (
-  req: customRequest,
-  res: Response,
-  next: NextFunction,
-) => {
+export const getUser = async (req: customRequest, res: Response, next: NextFunction) => {
   try {
     const user = await dbQuery.user.findUnique({
       where: { id: req.user.id },
@@ -580,7 +555,7 @@ export const getUser = async (
         createdAt: true,
         updatedAt: true,
       },
-    })
+    });
     if (!user) {
       return responseHandler(
         {
@@ -591,7 +566,7 @@ export const getUser = async (
         },
         req,
         res,
-      )
+      );
     }
     responseHandler(
       {
@@ -602,41 +577,37 @@ export const getUser = async (
       },
       req,
       res,
-    )
+    );
   } catch (error) {
-    console.error(error)
-    let err: CustomError
+    console.error(error);
+    let err: CustomError;
     if (error instanceof PrismaClientKnownRequestError) {
       err = {
         name: 'CustomError',
         message: error.message,
         statusCode: 400,
         reason: DB_ERROR,
-      }
+      };
     } else {
       err = {
         name: 'CustomError',
         message: 'An internal server error occurred',
         statusCode: 500,
         reason: SERVER_ERROR,
-      }
+      };
     }
-    next(err)
+    next(err);
   }
-}
+};
 
-export const resetPassword = async (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const resetPassword = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { email, username } = req.body.recognition
+    const { email, username } = req.body.recognition;
     const user = await dbQuery.user.findFirst({
       where: {
         OR: [{ email }, { username }],
       },
-    })
+    });
 
     if (!user) {
       return responseHandler(
@@ -648,28 +619,28 @@ export const resetPassword = async (
         },
         req,
         res,
-      )
+      );
     }
 
     // Send the password reset link to the user's email
   } catch (error) {
-    console.error(error)
-    let err: CustomError
+    console.error(error);
+    let err: CustomError;
     if (error instanceof PrismaClientKnownRequestError) {
       err = {
         name: 'CustomError',
         message: error.message,
         statusCode: 400,
         reason: DB_ERROR,
-      }
+      };
     } else {
       err = {
         name: 'CustomError',
         message: 'An internal server error occurred',
         statusCode: 500,
         reason: SERVER_ERROR,
-      }
+      };
     }
-    next(err)
+    next(err);
   }
-}
+};
