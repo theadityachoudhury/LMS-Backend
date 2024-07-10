@@ -19,7 +19,7 @@ const sendMail = async (to: string, subject: string, template: string, data: any
 	let attempt = 0;
 	while (attempt < retries) {
 		try {
-			const html = compile(readFileSync(resolve(__dirname, `../Templates/${template}.hbs`), 'utf8'))(data);
+			const html = compile(readFileSync(resolve(__dirname, `../Views/${template}.hbs`), 'utf8'))(data);
 			await transporter.sendMail({
 				from: `${SMTP_SENDER_NAME} <${SMTP_USER}>`,
 				to,
