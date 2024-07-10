@@ -1,8 +1,8 @@
 import jwt from 'jsonwebtoken';
+import { resUser } from '../Types';
 import Config from '../Config';
 import { randomUUID } from 'crypto';
 import crypto from 'crypto';
-import { resUser } from '../Types/User';
 
 export function generateAccessToken(user: resUser) {
     //i do not want others to decode the token so is it possible to encrypt the token

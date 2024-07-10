@@ -1,3 +1,5 @@
+import { Request } from 'express';
+
 export interface User {
     id: string; // Corresponds to the `id` field in the Prisma model
     email: string; // Corresponds to the `email` field in the Prisma model
@@ -29,4 +31,21 @@ export interface resUser {
     deleted: boolean; // Corresponds to the `deleted` field in the Prisma model
     disabled: boolean; // Corresponds to the `disabled` field in the Prisma model
     verified: boolean; // Corresponds to the `verified` field in the Prisma model
+}
+
+export interface token {
+    accessToken: string;
+    refreshToken: string;
+    expiresIn: Date;
+}
+
+export interface customRequest extends Request {
+    user: resUser;
+    token: token;
+    device: DeviceInfo;
+}
+
+interface DeviceInfo {
+    type: string;
+    name: string;
 }

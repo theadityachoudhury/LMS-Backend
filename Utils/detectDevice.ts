@@ -1,10 +1,10 @@
 import { Response, NextFunction } from 'express';
+import { customRequest } from '../Types';
 import UAParser from 'ua-parser-js';
-import { customRequest } from '../Types/Request';
 
 export const detectDevice = (req: customRequest, res: Response, next: NextFunction) => {
     const parser = new UAParser();
-    const ua = req.headers.get('User-Agent') || ''; // Provide a default empty string if undefined
+    const ua = req.headers['user-agent'] || ''; // Provide a default empty string if undefined
     const result = parser.setUA(ua).getResult();
 
     req.device = {

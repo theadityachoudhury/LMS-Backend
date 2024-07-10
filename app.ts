@@ -1,66 +1,82 @@
-import express, { Request, Response, NextFunction } from 'express'
-import cors from 'cors'
-import cookieParser from 'cookie-parser'
-import config from './Config'
-import { startServer } from './Utils/startServer'
+import express, { Request, Response, NextFunction } from 'express';
+import cors from 'cors';
+import config from './Config';
+import cookieParser from 'cookie-parser';
+import { startServer } from './Utils/startServer';
+import consola from 'consola';
+import { errorHandler, CustomError } from './Utils/errorHandler'; // Adjust import for CustomError
+import { responseHandler } from './Utils/responseHandler';
+import { NOT_FOUND } from './Utils/responseMessages';
+import Auth from './Routes/Auth';
+import { detectDevice } from './Utils/detectDevice';
+const app = express();
+consola.wrapAll();
 
-//Server Initialization
-const app = express()
+app.use(detectDevice as any);
 
-//Server Configurations
-app.use(
-  cors({
-    credentials: true,
-    origin: [config.FRONTEND_URL],
-  }),
-)
-
-app.use(express.json())
-app.use(express.urlencoded({ extended: true }))
-app.use(cookieParser())
-
-//API routes starts here
-
-//Default routes
+// Request logger middleware
 app.use((req: Request, res: Response, next: NextFunction) => {
-  // res.header('Access-Control-Allow-Origin', '*')
-  res.header(
-    'Access-Control-Allow-Headers',
-    'Origin,X-Requested-With, Content-Type, Accept',
-  )
-  next()
-})
+    consola.info({
+        message: `Method: ${req.method}, URL: ${req.url}, IP: ${req.ip}`,
+        badge: true,
+    });
+    // consola.info({ message: `Device: ${req.device.type}, UA: ${req.headers["user-agent"] || "Unkown"}`, badge: true });
+    next();
+    //useing res object without affecting any code to bypass the ts unused variable error
+    res; //this will not affect anything??
+});
+
+// CORS middleware
+app.use(
+    cors({
+        credentials: true,
+        origin: [config.FRONTEND_URL],
+    }),
+);
+
+// Body parsers
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Cookie parser middleware
+app.use(cookieParser());
+
+// Example route
 app.get('/', (req: Request, res: Response) => {
-  res.send({
-    data: {
-      appName: 'CodeSync | Backend',
-      developedBy: 'Aditya Choudhury',
-      maintainedBy: 'Aditya Choudhury',
-      version: '1.0.0.0',
-    },
-    success: true,
-  })
-})
+    if (req.query.error) {
+        const err: CustomError = {
+            name: 'CustomError',
+            message: 'An error occurred',
+            statusCode: 400,
+            reason: 'Bad Request',
+        };
+        throw err;
+    }
+    responseHandler({ status: 200, success: true, message: 'Hello, World!', data: null }, req, res);
+});
 
-//Health check API
 app.get('/health', (req: Request, res: Response) => {
-  return res.status(200).json({
-    status: 200,
-    message: 'Server is up and running',
-  })
-})
+    responseHandler({ status: 200, success: true, message: 'Server is running', data: null }, req, res);
+});
 
-//App Routes
+// Routes
+app.use('/api/auth', Auth);
 
+// Not found middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+    const err: CustomError = {
+        name: 'CustomError',
+        message: NOT_FOUND,
+        statusCode: 404,
+        reason: 'Not Found',
+    };
+    next(err);
+});
 
-// Default not-found route
-app.use((req: Request, res: Response) => {
-  res.send({
-    reason: 'invalid-request',
-    message:
-      'The endpoint you wanna reach is not available! Please check the endpoint again',
-    success: false,
-  })
-})
+// Error handling middleware
+app.use((err: CustomError, req: Request, res: Response, next: NextFunction) => {
+    errorHandler(err, req, res, next);
+});
 
-startServer(app)
+// Start server
+startServer(app);
