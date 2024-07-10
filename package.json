@@ -5,7 +5,7 @@
   "main": "app.ts",
   "scripts": {
     "server": "node ./dist/app.js",
-    "build": "tsc",
+    "build": "tsc && npm run copy-templates",
     "dev": "nodemon -L -e ts,json,hbs,js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "prettier": "prettier --write \"**/*.ts\"",
@@ -15,7 +15,8 @@
     "build:compile": "npx babel src --extensions .ts --out-dir build --source-maps",
     "build:types": "tsc",
     "generate": "npx prisma generate",
-    "push": "npx prisma db push"
+    "push": "npx prisma db push",
+    "copy-templates": "copyfiles -u 1 Templates/**/* dist/Templates"
   },
   "keywords": [
     "lms",
@@ -64,6 +65,7 @@
     "babel-core": "6.26.3",
     "babel-plugin-module-resolver": "5.0.2",
     "babel-plugin-source-map-support": "2.2.0",
+    "copyfiles": "2.4.1",
     "eslint": "8.57.0",
     "eslint-config-prettier": "9.1.0",
     "eslint-config-standard": "17.1.0",
