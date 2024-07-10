@@ -1,56 +1,98 @@
-import nodemailer from "nodemailer";
-import Config from "../Config";
+import nodemailer from 'nodemailer';
+import { readFileSync } from 'fs';
+import { resolve } from 'path';
+import { compile } from 'handlebars';
+import config from '../Config';
 
-const { SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_HOST, SMTP_SENDER_NAME } = Config;
+const { SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS, SMTP_SENDER_NAME } = config;
+const transporter = nodemailer.createTransport({
+	host: SMTP_HOST,
+	port: SMTP_PORT,
+	secure: true,
+	auth: {
+		user: SMTP_USER,
+		pass: SMTP_PASS,
+	},
+});
 
-const sendMailWithRetry = async (transporter: any, message: any, retries: number = 3, delay: number = 1000) => {
-	for (let attempt = 1; attempt <= retries; attempt++) {
+const sendMail = async (to: string, subject: string, template: string, data: any, retries = 3) => {
+	let attempt = 0;
+	while (attempt < retries) {
 		try {
-			let info = await transporter.sendMail(message);
-			return info;
+			const html = compile(readFileSync(resolve(__dirname, `../Templates/${template}.hbs`), 'utf8'))(data);
+			await transporter.sendMail({
+				from: `${SMTP_SENDER_NAME} <${SMTP_USER}>`,
+				to,
+				subject,
+				html,
+			});
+			return; // Exit function if email sent successfully
 		} catch (error) {
+			attempt++;
+			console.error(`Attempt ${attempt} failed to send email to ${to}: ${error}`);
 			if (attempt < retries) {
-				console.error(`Attempt ${attempt} to send email failed. Retrying in ${delay} ms...`);
-				await new Promise(res => setTimeout(res, delay));
-				delay *= 2; // Exponential backoff
+				console.log(`Retrying after 3 seconds...`);
+				await new Promise((resolve) => setTimeout(resolve, 3000)); // Wait for 3 seconds before retrying
 			} else {
-				console.error(`All ${retries} attempts to send email failed.`);
-				throw error;
+				console.error(`All ${retries} attempts failed to send email to ${to}.`);
+				throw new Error(`Failed to send email to ${to}`);
 			}
 		}
 	}
 };
 
-export const mailer = async (
-	to: any,
-	subject: string,
-	hbody: string,
-	userId: string,
-	type: string
-) => {
-	const transporter = nodemailer.createTransport({
-		host: SMTP_HOST,
-		port: SMTP_PORT,
-		secure: true,
-		auth: {
-			user: SMTP_USER,
-			pass: SMTP_PASS,
-		},
-	});
-	if (!Array.isArray(to)) {
-		to = [to];
-	}
-
-	let message = {
-		from: `${SMTP_SENDER_NAME} <${SMTP_USER}>`, // sender address
-		to: to.join(", "), // List of receivers, join the array into a comma-separated string
-		subject: subject, // Subject line
-		html: hbody, // html body
-	};
-
+export const serverStartMail = async (to: string) => {
 	try {
-		await sendMailWithRetry(transporter, message);
+		await sendMail(to, 'Server started', 'serverStart', {});
 	} catch (error) {
-		console.error('Failed to send email:', error);
+		console.error(`Failed to send server start email to ${to}: ${error}`);
+		throw error;
+	}
+};
+
+export const sendOtpMail = async (to: string, otp: string, name: string) => {
+	try {
+		await sendMail(to, 'OTP for your account', 'otp', { otp, name });
+	} catch (error) {
+		console.error(`Failed to send OTP email to ${to}: ${error}`);
+		throw error;
+	}
+};
+
+export const sendWelcomeMail = async (to: string, name: string) => {
+	try {
+		await sendMail(to, 'Welcome to our platform', 'welcome', {
+			name,
+			verify_link: 'https://lms.adityachoudhury.com/verify/',
+			support_link: 'https://lms.adityachoudhury.com/support',
+			manage_notifications_link: `https://lms.adityachoudhury.com/manage-notifications/${to}`,
+		});
+	} catch (error) {
+		console.error(`Failed to send welcome email to ${to}: ${error}`);
+		throw error;
+	}
+};
+
+export const loginAlertMail = async (to: string, userName: string, deviceType: string, browser: string) => {
+	try {
+		await sendMail(to, 'Login Alert', 'Login', {
+			userName,
+			deviceType,
+			browser,
+			loginTime: new Date().toLocaleString(),
+			resetPasswordLink: `${config.FRONTEND_URL}/reset`,
+		});
+	} catch (error) {
+		console.error(`Failed to send login alert email to ${to}: ${error}`);
+		throw error;
+	}
+};
+
+export const sendPasswordResetMail = async (to: string, name: string, resetLink: string, linkExpiryTime: string) => {
+	try {
+		await sendMail(to, 'Password Reset', 'passwordReset', { name, resetLink, linkExpiryTime });
+	} catch (error) {
+		console.error(`Failed to send password reset email to ${to}: ${error}`);
+		throw error;
 	}
 };

@@ -38,6 +38,7 @@
     "@types/jsonwebtoken": "^9.0.5",
     "@types/node": "^20.10.5",
     "@types/nodemailer": "^6.4.14",
+    "@types/ua-parser-js": "0.7.39",
     "@typescript-eslint/eslint-plugin": "^6.17.0",
     "@typescript-eslint/parser": "^6.17.0",
     "babel-core": "^6.26.3",
@@ -64,9 +65,11 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
+    "handlebars": "4.7.8",
     "joi": "^17.11.0",
     "jsonwebtoken": "^9.0.2",
-    "nodemailer": "^6.9.7"
+    "nodemailer": "^6.9.7",
+    "ua-parser-js": "1.0.38"
   },
   "lint-staged": {
     "**/*.{ts,js}": "eslint --cache --cache-location .next/cache/eslint/ --fix",

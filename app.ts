@@ -1,8 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express'
 import cors from 'cors'
-import { startServer } from './Utils'
 import cookieParser from 'cookie-parser'
 import config from './Config'
+import { startServer } from './Utils/startServer'
 
 //Server Initialization
 const app = express()
