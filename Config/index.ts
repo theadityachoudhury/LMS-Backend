@@ -39,6 +39,7 @@ const config = {
     SMTP_SENDER_NAME: process.env.SMTP_SENDER_NAME as string,
     NODE_ENV: process.env.NODE_ENV as string,
     HASH_SECRET: process.env.HASH_SECRET as string,
+    GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID as string,
 };
 
 export default config;

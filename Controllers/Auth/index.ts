@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { dbQuery } from '../../Utils/connnectToDB';
 import { User, customRequest, resUser } from '../../Types';
 import { responseHandler } from '../../Utils/responseHandler';
+import { OAuth2Client } from 'google-auth-library';
 import {
     DB_ERROR,
     INCORRECR_PASSWORD,
@@ -30,6 +31,8 @@ import { comparePassword, hashPassword } from '../../Utils/hash';
 import { loginAlertMail, sendPasswordResetMail, sendWelcomeMail } from '../../Utils/mailer';
 import { generateAccessToken, generateRefreshToken, generateResetPasswordToken } from '../../Utils/tokens';
 import { randomUUID } from 'crypto';
+import config from '../../Config';
+import { passwordGenerator } from '../../Utils/passwordGenerator';
 
 /**
  * Register Function
@@ -302,6 +305,182 @@ export const login = async (req: customRequest, res: Response, next: NextFunctio
             };
         }
         return next(err);
+    }
+};
+
+export const continueWithGoogle = async (req: customRequest, res: Response, next: NextFunction) => {
+    const client = new OAuth2Client(config.GOOGLE_CLIENT_ID);
+    var newUser = false;
+    try {
+        const { credential } = req.body;
+        const ticket = await client.verifyIdToken({
+            idToken: credential,
+            audience: config.GOOGLE_CLIENT_ID,
+        });
+
+        const payload: any = ticket.getPayload();
+
+        let user = await dbQuery.user.findFirst({
+            where: {
+                email: payload.email,
+            },
+        });
+
+        if (!user) {
+            //create username as given_name + family_name + randomUUID where first 4 letters from random uuid is taken
+            newUser = true;
+            user = await dbQuery.user.create({
+                data: {
+                    email: payload.email,
+                    username: `${payload.given_name}${payload.family_name}${randomUUID().slice(0, 5)}`.toLowerCase(),
+                    password: hashPassword(passwordGenerator(16)),
+                    name: {
+                        first: payload.given_name,
+                        last: payload.family_name || '',
+                    },
+                    verified: true,
+                },
+            });
+        }
+
+        if (user.deleted) {
+            return responseHandler(
+                {
+                    status: 402,
+                    success: false,
+                    message: USER_IS_DELETED,
+                    data: null,
+                },
+                req,
+                res,
+            );
+        }
+
+        if (user.disabled) {
+            return responseHandler(
+                {
+                    status: 405,
+                    success: false,
+                    message: USER_IS_DISABLED,
+                    data: null,
+                },
+                req,
+                res,
+            );
+        }
+
+        const refreshTokenColl = await dbQuery.refreshToken.findFirst({
+            where: {
+                userId: user.id,
+            },
+        });
+
+        const tokens = refreshTokenColl?.token || [];
+
+        const resUser: resUser = {
+            id: user.id,
+            email: user.email,
+            username: user.username,
+            name: user.name,
+            role: user.role,
+            deleted: user.deleted,
+            disabled: user.disabled,
+            verified: user.verified,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt,
+        };
+
+        const accessToken: string = generateAccessToken(resUser);
+        const refreshToken: string = generateRefreshToken(resUser);
+        const ua: string = req.headers['user-agent'] || 'Unkown';
+
+        const now = new Date();
+        const validTokens = tokens.filter((token) => token.expiresIn > now);
+
+        if (validTokens.length >= 4) {
+            return responseHandler(
+                {
+                    status: 403,
+                    success: false,
+                    message: MAX_SESSIONS,
+                    data: { validTokens, tempAccessToken: accessToken },
+                },
+                req,
+                res,
+            );
+        }
+
+        const accessTokenExpiresIn = new Date(Date.now() + 4 * 60 * 60 * 1000);
+        validTokens.push({
+            accessToken: accessToken,
+            refreshToken: refreshToken,
+            expiresIn: accessTokenExpiresIn, // Adjust the expiration time as needed
+            lastUsed: now,
+            instanceName: ua,
+            tokenid: randomUUID(),
+        });
+
+        if (refreshTokenColl) {
+            await dbQuery.refreshToken.update({
+                where: { id: refreshTokenColl.id },
+                data: { token: validTokens },
+            });
+        } else {
+            await dbQuery.refreshToken.create({
+                data: {
+                    userId: user.id,
+                    token: validTokens,
+                },
+            });
+        }
+
+        res.cookie('accessToken', accessToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'live',
+            sameSite: 'strict',
+            maxAge: 4 * 60 * 60 * 1000, //how much time?
+        });
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'live',
+            sameSite: 'strict',
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+        // Respond with the access token and refresh token
+        responseHandler(
+            {
+                status: 200,
+                success: true,
+                message: LOGIN_SUCCESS,
+                data: { accessToken, refreshToken, user: resUser, expiresIn: accessTokenExpiresIn },
+            },
+            req,
+            res,
+        );
+        if (newUser) {
+            sendWelcomeMail(user.email, user.name.first).catch((error) => console.error(error));
+        }
+        loginAlertMail(user.email, user.name.first, req.device.type, req.headers['user-agent'] || 'Unknown').catch((error) => console.error(error));
+    } catch (error) {
+        console.error(error);
+        let err: CustomError;
+        if (error instanceof PrismaClientKnownRequestError) {
+            err = {
+                name: 'CustomError',
+                message: error.message,
+                statusCode: 400,
+                reason: DB_ERROR,
+            };
+        } else {
+            err = {
+                name: 'CustomError',
+                message: SERVER_ERROR,
+                statusCode: 500,
+                reason: SERVER_ERROR,
+            };
+        }
+        next(err);
     }
 };
 

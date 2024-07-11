@@ -1,4 +1,14 @@
-import { getUser, isActiveResetLink, login, logout, refreshToken, register, resetPassword, resetPasswordLink } from '../../Controllers/Auth';
+import {
+    continueWithGoogle,
+    getUser,
+    isActiveResetLink,
+    login,
+    logout,
+    refreshToken,
+    register,
+    resetPassword,
+    resetPasswordLink,
+} from '../../Controllers/Auth';
 import { isUser, loginValidator, refreshTokenValidator, signupValidator, verifyToken } from '../../Middlewares/Auth';
 
 import express from 'express';
@@ -13,5 +23,7 @@ app.get('/user', verifyToken as any, getUser as any);
 app.post('/reset', resetPasswordLink);
 app.get('/reset/:token', isActiveResetLink);
 app.post('/reset/:token', resetPassword);
+
+app.post('/oauth/google', continueWithGoogle as any);
 
 export default app;
