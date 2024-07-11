@@ -234,10 +234,11 @@ export const login = async (req: customRequest, res: Response, next: NextFunctio
             );
         }
 
+        const accessTokenExpiresIn = new Date(Date.now() + 4 * 60 * 60 * 1000);
         validTokens.push({
             accessToken: accessToken,
             refreshToken: refreshToken,
-            expiresIn: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // Adjust the expiration time as needed
+            expiresIn: accessTokenExpiresIn, // Adjust the expiration time as needed
             lastUsed: now,
             instanceName: ua,
             tokenid: randomUUID(),
@@ -259,14 +260,14 @@ export const login = async (req: customRequest, res: Response, next: NextFunctio
 
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: process.env.NODE_ENV === 'live',
             sameSite: 'strict',
             maxAge: 4 * 60 * 60 * 1000, //how much time?
         });
 
         res.cookie('refreshToken', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: process.env.NODE_ENV === 'live',
             sameSite: 'strict',
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
@@ -276,7 +277,7 @@ export const login = async (req: customRequest, res: Response, next: NextFunctio
                 status: 200,
                 success: true,
                 message: LOGIN_SUCCESS,
-                data: { accessToken, refreshToken, user: resUser },
+                data: { accessToken, refreshToken, user: resUser, expiresIn: accessTokenExpiresIn },
             },
             req,
             res,
@@ -500,7 +501,7 @@ export const refreshToken = async (req: customRequest, res: Response, next: Next
 
         res.cookie('accessToken', accessToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
+            secure: process.env.NODE_ENV === 'live',
             sameSite: 'strict',
             maxAge: 4 * 60 * 60 * 1000,
         });
