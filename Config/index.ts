@@ -14,6 +14,8 @@ const requiredEnvVars = [
     'SMTP_SENDER_NAME',
     'NODE_ENV',
     'HASH_SECRET',
+    'GOOGLE_CLIENT_ID',
+    'GOOGLE_CLIENT_SECRET',
 ];
 
 const missingEnvVars = requiredEnvVars.filter((envVar) => !process.env[envVar]);
@@ -40,6 +42,7 @@ const config = {
     NODE_ENV: process.env.NODE_ENV as string,
     HASH_SECRET: process.env.HASH_SECRET as string,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID as string,
+    GOOGLE_CLIENT_SECRET: process.env.GOOGLE_CLIENT_SECRET as string,
 };
 
 export default config;

@@ -2,7 +2,6 @@ import { NextFunction, Request, Response } from 'express';
 import { dbQuery } from '../../Utils/connnectToDB';
 import { User, customRequest, resUser } from '../../Types';
 import { responseHandler } from '../../Utils/responseHandler';
-import { OAuth2Client } from 'google-auth-library';
 import {
     DB_ERROR,
     INCORRECR_PASSWORD,
@@ -309,16 +308,34 @@ export const login = async (req: customRequest, res: Response, next: NextFunctio
 };
 
 export const continueWithGoogle = async (req: customRequest, res: Response, next: NextFunction) => {
-    const client = new OAuth2Client(config.GOOGLE_CLIENT_ID);
     var newUser = false;
     try {
         const { credential } = req.body;
-        const ticket = await client.verifyIdToken({
-            idToken: credential,
-            audience: config.GOOGLE_CLIENT_ID,
-        });
+        // const ticket = await client.verifyIdToken({
+        //     idToken: credential,
+        //     audience: config.GOOGLE_CLIENT_ID,
+        // });
 
-        const payload: any = ticket.getPayload();
+        // const payload: any = ticket.getPayload();
+        var payload: any;
+
+        try {
+            const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                method: 'GET',
+                headers: {
+                    Authorization: `Bearer ${credential}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (!response.ok) {
+                throw new Error('Error fetching user data from google');
+            }
+            payload = await response.json();
+        } catch (error) {
+            console.error(error);
+            throw new Error('Error fetching user data from google');
+        }
 
         let user = await dbQuery.user.findFirst({
             where: {
