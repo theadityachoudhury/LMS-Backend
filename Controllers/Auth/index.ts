@@ -890,8 +890,8 @@ export const resetPasswordLink = async (req: Request, res: Response, next: NextF
             res,
         );
 
-        sendPasswordResetMail(user.email, user.name.first, `https://lms.adityachoudhury.com/reset/${resetToken}`, expiresAt.toLocaleString()).catch(
-            (error) => console.error(error),
+        sendPasswordResetMail(user.email, user.name.first, `${config.FRONTEND_URL}/reset/${resetToken}`, expiresAt.toLocaleString()).catch((error) =>
+            console.error(error),
         );
     } catch (error) {
         console.error(error);

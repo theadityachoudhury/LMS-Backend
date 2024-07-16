@@ -63,9 +63,9 @@ export const sendWelcomeMail = async (to: string, name: string) => {
     try {
         await sendMail(to, 'Welcome to our platform', 'welcome', {
             name,
-            verify_link: 'https://lms.adityachoudhury.com/verify/',
-            support_link: 'https://lms.adityachoudhury.com/support',
-            manage_notifications_link: `https://lms.adityachoudhury.com/manage-notifications/${to}`,
+            verify_link: `${config.FRONTEND_URL}/verify/`,
+            support_link: `${config.FRONTEND_URL}/support`,
+            manage_notifications_link: `${config.FRONTEND_URL}/manage-notifications/${to}`,
         });
     } catch (error) {
         console.error(`Failed to send welcome email to ${to}: ${error}`);
@@ -77,7 +77,7 @@ export const loginAlertMail = async (to: string, userName: string, deviceType: s
     try {
         await sendMail(to, 'Login Alert', 'Login', {
             userName,
-            deviceType,
+            deviceType: `${deviceType.toString()}`,
             browser,
             loginTime: new Date().toLocaleString(),
             resetPasswordLink: `${config.FRONTEND_URL}/reset`,
