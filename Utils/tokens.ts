@@ -34,7 +34,7 @@ export function generateResetPasswordToken(user: resUser) {
     hmac.update(uniqueId + userData);
 
     // Final token combining uniqueId and HMAC hash
-    const token = `${uniqueId}.${hmac.digest('hex')}`;
+    const token = `${uniqueId}_${hmac.digest('hex')}`;
 
     return token;
 }
